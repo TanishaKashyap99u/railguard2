@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RailGuard AI - Railway Platform Risk & Guidance</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <span class="logo-icon">🚆</span>
+                <span class="logo-text">RailGuard <strong>AI</strong></span>
+            </div>
+            <div class="nav-actions">
+                <select id="langSelect" class="lang-select" aria-label="Language selection">
+                    <option value="en">English</option>
+                    <option value="hi">हिन्दी (Hindi)</option>
+                </select>
+                <a href="/admin" class="btn-admin-nav" id="adminNavLink">Admin Portal</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <h1 id="heroTitle">Smart Platform Verification & Risk Assistance</h1>
+            <p id="heroSubtitle">Verify your platform, estimate transit risk, and receive walking guidance to catch your train on time.</p>
+        </section>
+
+        <!-- Quick Test Chips -->
+        <div class="quick-chips-card">
+            <span class="quick-title">⚡ Quick Test Scenarios:</span>
+            <div class="chip-buttons">
+                <button type="button" class="chip btn-chip-match" onclick="fillQuickTest('12951', 'New Delhi', 3)">
+                    🟢 Correct Platform (12951 @ PF 3)
+                </button>
+                <button type="button" class="chip btn-chip-mismatch" onclick="fillQuickTest('12951', 'New Delhi', 8)">
+                    🔴 Wrong Platform (12951 @ PF 8)
+                </button>
+                <button type="button" class="chip btn-chip-vande" onclick="fillQuickTest('22436', 'New Delhi', 1)">
+                    🟠 High Transfer (Vande Bharat PF 16 vs 1)
+                </button>
+            </div>
+        </div>
+
+        <!-- Passenger Input Form Card -->
+        <section class="card form-card">
+            <h2 id="formTitle">Check Train & Platform Status</h2>
+            <form id="checkForm" autocomplete="off">
+                <div class="form-group">
+                    <label for="trainInput" id="lblTrain">Train Number or Name:</label>
+                    <input type="text" id="trainInput" list="trainList" placeholder="e.g. 12951 or Rajdhani Express" required>
+                    <datalist id="trainList">
+                        <option value="12951">12951 - Mumbai Rajdhani Express</option>
+                        <option value="12004">12004 - Lucknow Shatabdi Express</option>
+                        <option value="12302">12302 - Kolkata Rajdhani Express</option>
+                        <option value="22436">22436 - Vande Bharat Express</option>
+                        <option value="12424">12424 - Dibrugarh Rajdhani Express</option>
+                        <option value="12002">12002 - Bhopal Shatabdi Express</option>
+                        <option value="12616">12616 - Grand Trunk Express</option>
+                        <option value="12952">12952 - New Delhi Rajdhani (Mumbai)</option>
+                        <option value="22222">22222 - CSMT Rajdhani Express (Nizamuddin)</option>
+                    </datalist>
+                    <small class="helper-text" id="helpTrain">Select from suggestions or enter train number / name</small>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col">
+                        <label for="stationInput" id="lblStation">Station Name or Code:</label>
+                        <input type="text" id="stationInput" list="stationList" placeholder="e.g. New Delhi or NDLS" required>
+                        <datalist id="stationList">
+                            <option value="New Delhi">New Delhi (NDLS)</option>
+                            <option value="Mumbai Central">Mumbai Central (MMCT)</option>
+                            <option value="Hazrat Nizamuddin">Hazrat Nizamuddin (NZM)</option>
+                            <option value="Lucknow">Lucknow (LKO)</option>
+                            <option value="Varanasi Jn">Varanasi Jn (BSB)</option>
+                        </datalist>
+                    </div>
+
+                    <div class="form-group col">
+                        <label for="platformInput" id="lblPlatform">Your Current Platform:</label>
+                        <input type="number" id="platformInput" min="1" max="30" placeholder="e.g. 3" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary" id="btnSubmit">
+                    <span class="btn-text" id="btnText">Verify Platform & Analyze Risk</span>
+                    <span class="spinner" id="btnSpinner" style="display:none;">⏳ Checking...</span>
+                </button>
+            </form>
+        </section>
+
+        <!-- Results Card (Hidden by default) -->
+        <section class="card result-card" id="resultCard" style="display: none;">
+            <div id="mismatchBanner" class="alert-banner">
+                <!-- Dynamically populated banner: success or danger -->
+            </div>
+
+            <div class="result-grid">
+                <div class="result-item">
+                    <span class="result-label" id="lblAssignedPlat">Assigned Platform</span>
+                    <span class="result-value big-number" id="valAssignedPlat">-</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label" id="lblYourPlat">Your Current Platform</span>
+                    <span class="result-value big-number" id="valYourPlat">-</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label" id="lblTimeRem">Time Until Departure</span>
+                    <span class="result-value" id="valTimeRem">-</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label" id="lblRiskLevel">Miss Risk Level</span>
+                    <span class="badge" id="valRiskBadge">LOW</span>
+                </div>
+            </div>
+
+            <!-- Risk Details & Analysis -->
+            <div class="analysis-box" id="analysisBox">
+                <h3 id="analysisTitle">Risk & Transit Analysis</h3>
+                <p id="analysisSummary">-</p>
+                <div class="factors-list" id="factorsList">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Navigation Guidance -->
+            <div class="guidance-box" id="guidanceBox">
+                <h3 id="guidanceTitle">Step-by-Step Walking Guidance</h3>
+                <div class="guidance-content" id="guidanceContent">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- System Disclaimer -->
+            <div class="disclaimer-note">
+                <small id="disclaimerText">ℹ️ <strong>Academic Prototype Note:</strong> Platform information is based on scheduled database records. Always cross-check with official station audio announcements and display boards.</small>
+            </div>
+        </section>
+
+        <!-- Error Card -->
+        <div class="card error-card" id="errorCard" style="display: none;">
+            <span class="error-icon">⚠️</span>
+            <div>
+                <p id="errorMessage" style="font-weight: 600; margin-bottom: 0.25rem;">Train or station not found.</p>
+                <small id="errorHint" style="color: #64748b;">Try clicking one of the quick test chips above to see a verified sample train.</small>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2026 RailGuard AI | B.Tech CSE Final Year AI/ML Capstone Project</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+train_number,train_name,station,station_code,platform,departure_time,walk_minutes,crowd_level
+12951,Mumbai Rajdhani Express,New Delhi,NDLS,3,16:55,5,Medium
+12004,Lucknow Shatabdi Express,New Delhi,NDLS,1,06:10,4,Low
+12302,Kolkata Rajdhani Express,New Delhi,NDLS,4,16:50,6,High
+22436,Vande Bharat Express,New Delhi,NDLS,16,06:00,8,Medium
+12424,Dibrugarh Rajdhani Express,New Delhi,NDLS,2,16:20,5,Medium
+12002,Bhopal Shatabdi Express,New Delhi,NDLS,1,06:00,4,Low
+12616,Grand Trunk Express,New Delhi,NDLS,5,16:10,7,High
+12952,New Delhi Rajdhani,Mumbai Central,MMCT,1,17:00,4,Medium
+22222,CSMT Rajdhani Express,Hazrat Nizamuddin,NZM,5,16:55,6,Medium
+12009,Mumbai Ahmedabad Shatabdi,Mumbai Central,MMCT,2,06:20,5,Low
+12003,Lucknow Swarna Shatabdi,Lucknow,LKO,2,15:30,4,Medium
+22435,Vande Bharat Express,Varanasi Jn,BSB,1,15:00,5,High

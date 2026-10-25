@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RailGuard AI - Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .table-responsive {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        th {
+            background-color: #f1f5f9;
+            font-weight: 600;
+        }
+        .btn-sm {
+            padding: 0.35rem 0.65rem;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-del { background: #ef4444; color: white; margin-left: 0.25rem; }
+        .csv-box {
+            background: #f8fafc;
+            border: 2px dashed var(--border-color);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .auth-bar {
+            background: #e2e8f0;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <span class="logo-icon">🚆</span>
+                <span class="logo-text">RailGuard <strong>AI Admin</strong></span>
+            </div>
+            <div class="nav-actions">
+                <a href="/" class="btn-admin-nav">Passenger View</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container" style="max-width: 1000px;">
+        <div class="admin-header">
+            <h2>Railway Schedule & Platform Manager</h2>
+        </div>
+
+        {% if not logged_in %}
+        <!-- Admin Login Card -->
+        <section class="card" style="max-width: 400px; margin: 2rem auto;">
+            <h3>Admin Authentication</h3>
+            {% if auth_error %}
+                <p style="color: red; font-size: 0.85rem; margin-bottom: 0.5rem;">{{ auth_error }}</p>
+            {% endif %}
+            <form method="POST" action="/admin/login">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" name="username" required placeholder="admin">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-primary">Sign In</button>
+            </form>
+            <p style="margin-top: 1rem; font-size: 0.75rem; color: #64748b; text-align: center;">Default prototype login: <code>admin</code> / <code>admin123</code></p>
+        </section>
+        {% else %}
+
+        <div class="auth-bar">
+            <span>Signed in as <strong>{{ session.get('admin_user', 'Admin') }}</strong></span>
+            <a href="/admin/logout" style="color: #ef4444; text-decoration: none; font-weight: 600;">Sign Out</a>
+        </div>
+
+        <!-- CSV Import Card -->
+        <section class="card">
+            <h3>Import CSV Train Dataset</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                Upload a CSV file containing: <code>train_number, train_name, station, station_code, platform, departure_time, walk_minutes, crowd_level</code>
+            </p>
+            <form action="/admin/import-csv" method="POST" enctype="multipart/form-data">
+                <div class="csv-box">
+                    <input type="file" name="csv_file" accept=".csv" required>
+                    <button type="submit" class="btn-primary" style="max-width: 200px; margin: 1rem auto 0;">Upload & Import</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Add or Update Train Record -->
+        <section class="card">
+            <h3>Add / Update Train Platform Assignment</h3>
+            <form action="/admin/save-train" method="POST">
+                <div class="form-row">
+                    <div class="form-group col">
+                        <label>Train Number</label>
+                        <input type="text" name="train_number" required placeholder="e.g. 12951">
+                    </div>
+                    <div class="form-group col">
+                        <label>Train Name</label>
+                        <input type="text" name="train_name" required placeholder="e.g. Mumbai Rajdhani">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col">
+                        <label>Station</label>
+                        <input type="text" name="station" required placeholder="e.g. New Delhi">
+                    </div>
+                    <div class="form-group col">
+                        <label>Station Code</label>
+                        <input type="text" name="station_code" placeholder="e.g. NDLS">
+                    </div>
+                    <div class="form-group col">
+                        <label>Assigned Platform</label>
+                        <input type="number" name="platform" min="1" max="30" required placeholder="3">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col">
+                        <label>Departure Time (HH:MM)</label>
+                        <input type="text" name="departure_time" pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" required placeholder="16:55">
+                    </div>
+                    <div class="form-group col">
+                        <label>Base Walk Minutes</label>
+                        <input type="number" name="walk_minutes" min="1" max="60" value="5" required>
+                    </div>
+                    <div class="form-group col">
+                        <label>Station Crowd Level</label>
+                        <select name="crowd_level" style="width: 100%; padding: 0.75rem; border: 1.5px solid var(--border-color); border-radius: 8px;">
+                            <option value="Low">Low</option>
+                            <option value="Medium" selected>Medium</option>
+                            <option value="High">High</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary">Save / Update Record</button>
+            </form>
+        </section>
+
+        <!-- Current Database Records -->
+        <section class="card">
+            <h3>Stored Train & Platform Records (Total: {{ records|length }})</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Train No.</th>
+                            <th>Train Name</th>
+                            <th>Station</th>
+                            <th>Code</th>
+                            <th>Platform</th>
+                            <th>Departure</th>
+                            <th>Crowd</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in records %}
+                        <tr>
+                            <td><strong>{{ r['train_number'] }}</strong></td>
+                            <td>{{ r['train_name'] }}</td>
+                            <td>{{ r['station'] }}</td>
+                            <td><span style="font-size: 0.8rem; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">{{ r['station_code'] or '-' }}</span></td>
+                            <td><span style="font-size: 1.1rem; font-weight: 700; color: var(--primary);">PF {{ r['platform'] }}</span></td>
+                            <td>{{ r['departure_time'] }}</td>
+                            <td>{{ r['crowd_level'] }}</td>
+                            <td>
+                                <form action="/admin/delete-train/{{ r['id'] }}" method="POST" style="display:inline;" onsubmit="return confirm('Delete this train record?');">
+                                    <button type="submit" class="btn-sm btn-del">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" style="text-align: center; color: var(--text-muted);">No train records found in SQLite database. Upload a CSV or add records above.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% endif %}
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2026 RailGuard AI | Administrator Control Panel</p>
+    </footer>
+</body>
+</html>

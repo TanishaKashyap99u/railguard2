@@ -7,21 +7,52 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
     <header class="navbar">
         <div class="nav-container">
+            <!-- Unique & Attractive RailGuard AI Shield & Train Vector Logo -->
             <div class="logo">
-                <span class="logo-icon">🚆</span>
-                <span class="logo-text">RailGuard <strong>AI</strong></span>
+                <svg class="logo-svg" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <!-- Protective Shield Contour -->
+                    <path d="M24 4L7 11V23C7 33.2 14.3 42.5 24 45C33.7 42.5 41 33.2 41 23V11L24 4Z" fill="url(#shieldGrad)" stroke="#38bdf8" stroke-width="1.5" />
+                    <!-- Train Aerodynamic Silhouette -->
+                    <path d="M17 15C17 13.9 17.9 13 19 13H29C30.1 13 31 13.9 31 15V27C31 29.8 28.8 32 26 32H22C19.2 32 17 29.8 17 27V15Z" fill="#ffffff" />
+                    <!-- Train Windshield -->
+                    <path d="M19 16C19 15.4 19.4 15 20 15H28C28.6 15 29 15.4 29 16V20H19V16Z" fill="#1e3a8a" />
+                    <!-- High-tech Twin Headlights -->
+                    <circle cx="20.5" cy="27.5" r="1.5" fill="#38bdf8" />
+                    <circle cx="27.5" cy="27.5" r="1.5" fill="#38bdf8" />
+                    <!-- Center Speed Streak -->
+                    <line x1="24" y1="23" x2="24" y2="28" stroke="#0284c7" stroke-width="1.5" stroke-linecap="round" />
+                    <!-- Train Rail Tracks / Ground -->
+                    <path d="M15 36L21 34H27L33 36" stroke="#93c5fd" stroke-width="2" stroke-linecap="round" />
+                    <path d="M13 39L35 39" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" />
+                    <defs>
+                        <linearGradient id="shieldGrad" x1="7" y1="4" x2="41" y2="45" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#1e3a8a" />
+                            <stop offset="0.6" stop-color="#0f172a" />
+                            <stop offset="1" stop-color="#0284c7" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <div class="logo-brand">
+                    <span class="logo-title">RailGuard <span class="ai-badge">AI</span></span>
+                    <span class="logo-sub" id="logoSub">Platform Risk & Guidance</span>
+                </div>
             </div>
+
+            <!-- Language Selector with English, Hindi, and Marathi -->
             <div class="nav-actions">
-                <select id="langSelect" class="lang-select" aria-label="Language selection">
-                    <option value="en">English</option>
-                    <option value="hi">हिन्दी (Hindi)</option>
-                </select>
-                <a href="/admin" class="btn-admin-nav" id="adminNavLink">Admin Portal</a>
+                <div class="lang-wrapper">
+                    <span class="lang-icon">🌐</span>
+                    <select id="langSelect" class="lang-select" aria-label="Language selection">
+                        <option value="en">English</option>
+                        <option value="hi">हिन्दी (Hindi)</option>
+                        <option value="mr">मराठी (Marathi)</option>
+                    </select>
+                </div>
             </div>
         </div>
     </header>
@@ -35,15 +66,15 @@
 
         <!-- Quick Test Chips -->
         <div class="quick-chips-card">
-            <span class="quick-title">⚡ Quick Test Scenarios:</span>
+            <span class="quick-title" id="quickTitle">⚡ Quick Test Scenarios:</span>
             <div class="chip-buttons">
-                <button type="button" class="chip btn-chip-match" onclick="fillQuickTest('12951', 'New Delhi', 3)">
+                <button type="button" class="chip btn-chip-match" id="chipMatch" onclick="fillQuickTest('12951', 'New Delhi', 3)">
                     🟢 Correct Platform (12951 @ PF 3)
                 </button>
-                <button type="button" class="chip btn-chip-mismatch" onclick="fillQuickTest('12951', 'New Delhi', 8)">
+                <button type="button" class="chip btn-chip-mismatch" id="chipMismatch" onclick="fillQuickTest('12951', 'New Delhi', 8)">
                     🔴 Wrong Platform (12951 @ PF 8)
                 </button>
-                <button type="button" class="chip btn-chip-vande" onclick="fillQuickTest('22436', 'New Delhi', 1)">
+                <button type="button" class="chip btn-chip-vande" id="chipTransfer" onclick="fillQuickTest('22436', 'New Delhi', 1)">
                     🟠 High Transfer (Vande Bharat PF 16 vs 1)
                 </button>
             </div>
@@ -66,6 +97,9 @@
                         <option value="12616">12616 - Grand Trunk Express</option>
                         <option value="12952">12952 - New Delhi Rajdhani (Mumbai)</option>
                         <option value="22222">22222 - CSMT Rajdhani Express (Nizamuddin)</option>
+                        <option value="12009">12009 - Mumbai Ahmedabad Shatabdi</option>
+                        <option value="12003">12003 - Lucknow Swarna Shatabdi</option>
+                        <option value="22435">22435 - Vande Bharat Express (Varanasi)</option>
                     </datalist>
                     <small class="helper-text" id="helpTrain">Select from suggestions or enter train number / name</small>
                 </div>
@@ -126,7 +160,7 @@
                 <h3 id="analysisTitle">Risk & Transit Analysis</h3>
                 <p id="analysisSummary">-</p>
                 <div class="factors-list" id="factorsList">
-                    <!-- Populated dynamically -->
+                    <!-- Populated dynamically with full localization -->
                 </div>
             </div>
 
@@ -155,7 +189,9 @@
     </main>
 
     <footer class="footer">
-        <p>&copy; 2026 RailGuard AI | B.Tech CSE Final Year AI/ML Capstone Project</p>
+        <div class="footer-container">
+            <p id="footerText">&copy; 2026 RailGuard AI | B.Tech CSE Final Year AI/ML Capstone Project</p>
+        </div>
     </footer>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>

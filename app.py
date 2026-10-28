@@ -17,8 +17,29 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 DB_PATH = os.path.join(DATA_DIR, 'railguard.db')
 CSV_PATH = os.path.join(DATA_DIR, 'train_platforms.csv')
+MODELS_DIR = os.path.join(BASE_DIR, 'models')
+MODEL_FILE = os.path.join(MODELS_DIR, 'risk_model.joblib')
+METRICS_FILE = os.path.join(MODELS_DIR, 'model_metrics.json')
 
 os.makedirs(DATA_DIR, exist_ok=True)
+os.makedirs(MODELS_DIR, exist_ok=True)
+
+# Scikit-learn ML Model reference
+ml_model = None
+
+def load_ml_model():
+    """Load Scikit-learn trained model if present on disk."""
+    global ml_model
+    if os.path.exists(MODEL_FILE):
+        try:
+            import joblib
+            ml_model = joblib.load(MODEL_FILE)
+            print("[INFO] Loaded Scikit-Learn Random Forest Model successfully!")
+        except Exception as e:
+            print(f"[WARN] Could not load ML model: {e}")
+            ml_model = None
+    else:
+        print("[INFO] No ML model file found yet. Using Rule-Based Risk Engine baseline.")
 
 # Default admin credentials for prototype
 DEFAULT_ADMIN_USER = 'admin'
@@ -126,15 +147,21 @@ def calculate_minutes_remaining(departure_time_str):
         return 25
 
 
-def perform_rule_based_risk_analysis(is_match, current_plat, assigned_plat, base_walk, crowd_level, minutes_remaining):
+def perform_rule_based_risk_analysis(is_match, current_plat, assigned_plat, base_walk, crowd_level, minutes_remaining, language='en'):
     """
     Transparent Rule-Based Risk Engine:
     Evaluates risk based on platform difference, walking distance, crowd delays, and time remaining.
+    Generates localized summaries in English, Hindi, or Marathi.
     """
     if is_match:
         estimated_walk = 0
         risk_level = 'Low'
-        summary = "You are already on the correct assigned platform. No transfer needed."
+        if language == 'hi':
+            summary = "आप पहले से ही सही प्लेटफॉर्म पर उपस्थित हैं। किसी अन्य प्लेटफॉर्म पर जाने की आवश्यकता नहीं है।"
+        elif language == 'mr':
+            summary = "तुम्ही आधीच योग्य नियुक्त प्लॅटफॉर्मवर उपस्थित आहात. इतर प्लॅटफॉर्मवर जाण्याची आवश्यकता नाही."
+        else:
+            summary = "You are already on the correct assigned platform. No transfer needed."
         return risk_level, estimated_walk, summary
 
     # Walk time calculation: Base walking + 1.5 min per platform gap + crowd delay
@@ -150,19 +177,34 @@ def perform_rule_based_risk_analysis(is_match, current_plat, assigned_plat, base
 
     if safety_margin < 5:
         risk_level = 'High'
-        summary = f"CRITICAL: Only {minutes_remaining} minutes remaining for an estimated {walk_estimate} minute walk through {crowd_level} crowd!"
+        if language == 'hi':
+            summary = f"अति आवश्यक: {crowd_level} भीड़ में ~{walk_estimate} मिनट पैदल दूरी के लिए केवल {minutes_remaining} मिनट शेष हैं!"
+        elif language == 'mr':
+            summary = f"अतिशय गंभीर: {crowd_level} गर्दीमध्ये ~{walk_estimate} मिनिटे चालण्यासाठी केवळ {minutes_remaining} मिनिटे शिल्लक आहेत!"
+        else:
+            summary = f"CRITICAL: Only {minutes_remaining} minutes remaining for an estimated {walk_estimate} minute walk through {crowd_level} crowd!"
     elif safety_margin <= 15:
         risk_level = 'Medium'
-        summary = f"CAUTION: Limited time buffer ({minutes_remaining} mins) for estimated {walk_estimate} minute walk to Platform {assigned_plat}."
+        if language == 'hi':
+            summary = f"सावधानी: प्लेटफॉर्म {assigned_plat} तक ~{walk_estimate} मिनट की पैदल दूरी के लिए समय सीमित ({minutes_remaining} मिनट) है।"
+        elif language == 'mr':
+            summary = f"सावधगिरी: प्लॅटफॉर्म {assigned_plat} पर्यंत ~{walk_estimate} मिनिटांच्या अंतरासाठी वेळ मर्यादित ({minutes_remaining} मिनिटे) आहे."
+        else:
+            summary = f"CAUTION: Limited time buffer ({minutes_remaining} mins) for estimated {walk_estimate} minute walk to Platform {assigned_plat}."
     else:
         risk_level = 'Low'
-        summary = f"MANAGEABLE: Sufficient time buffer ({minutes_remaining} mins) to walk ~{walk_estimate} mins to Platform {assigned_plat}."
+        if language == 'hi':
+            summary = f"सुरक्षित समय: प्लेटफॉर्म {assigned_plat} तक ~{walk_estimate} मिनट चलने के लिए पर्याप्त समय ({minutes_remaining} मिनट) शेष है।"
+        elif language == 'mr':
+            summary = f"सुरक्षित वेळ: प्लॅटफॉर्म {assigned_plat} पर्यंत ~{walk_estimate} मिनिटे चालण्यासाठी पुरेसा वेळ ({minutes_remaining} मिनिटे) शिल्लक आहे."
+        else:
+            summary = f"MANAGEABLE: Sufficient time buffer ({minutes_remaining} mins) to walk ~{walk_estimate} mins to Platform {assigned_plat}."
 
     return risk_level, walk_estimate, summary
 
 
 def generate_guidance_steps(is_match, current_plat, assigned_plat, walk_estimate, language='en'):
-    """Generate localized step-by-step walking guidance in English or Hindi."""
+    """Generate localized step-by-step walking guidance in English, Hindi, or Marathi."""
     steps = []
     if language == 'hi':
         if is_match:
@@ -173,6 +215,15 @@ def generate_guidance_steps(is_match, current_plat, assigned_plat, walk_estimate
             steps.append(f"प्लेटफॉर्म {current_plat} पर निकटतम पैदल उपरिगामी पुल (FOB), लिफ्ट या एस्केलेटर की ओर बढ़ें।")
             steps.append(f"उपरिगामी पुल के माध्यम से प्लेटफॉर्म {assigned_plat} की ओर जाएं। (अनुमानित पैदल समय: ~{walk_estimate} मिनट)")
             steps.append(f"प्लेटफॉर्म {assigned_plat} पर पहुंचकर ओवरहेड इलेक्ट्रॉनिक डिस्प्ले बोर्ड से ट्रेन की पुष्टि करें।")
+    elif language == 'mr':
+        if is_match:
+            steps.append(f"तुम्ही आधीच नियुक्त प्लॅटफॉर्म {assigned_plat} वर उपस्थित आहात.")
+            steps.append("कृपया प्लॅटफॉर्मवरील इलेक्ट्रॉनिक कोच इंडिकेटर बोर्डवर आपल्या डब्याची (Coach) स्थिती तपासा.")
+            steps.append("गाडी पूर्णपणे थांबेपर्यंत पिवळ्या सुरक्षा रेषेच्या मागे उभे राहा.")
+        else:
+            steps.append(f"प्लॅटफॉर्म {current_plat} वरील सर्वात जवळच्या पादचारी पुलाकडे (FOB), लिफ्ट किंवा एस्कलेटरकडे त्वरित जा.")
+            steps.append(f"पादचारी पुलावरून प्लॅटफॉर्म {assigned_plat} च्या दिशेने जा. (अंदाजे चालण्याची वेळ: ~{walk_estimate} मिनिटे).")
+            steps.append(f"प्लॅटफॉर्म {assigned_plat} वर पोहोचल्यानंतर ओव्हरहेड डिजिटल स्क्रीनवर गाडी क्रमांकाची खात्री करा.")
     else:
         if is_match:
             steps.append(f"You are currently on the assigned Platform {assigned_plat}.")
@@ -253,17 +304,36 @@ def check_platform():
     base_walk = record['walk_minutes']
     crowd_lvl = record['crowd_level']
 
-    # Rule-Based Risk Engine
+    # 1. Baseline Rule-Based transit time and summary calculation
     risk_level, estimated_walk, summary = perform_rule_based_risk_analysis(
         is_match=is_match,
         current_plat=current_plat,
         assigned_plat=assigned_plat,
         base_walk=base_walk,
         crowd_level=crowd_lvl,
-        minutes_remaining=minutes_rem
+        minutes_remaining=minutes_rem,
+        language=language
     )
+    model_used = 'Transparent Rule-Based Baseline Engine'
 
-    # Guidance
+    # 2. Scikit-learn Machine Learning Inference (if trained model exists)
+    if ml_model is not None:
+        try:
+            crowd_map = {'low': 0, 'medium': 1, 'high': 2}
+            c_val = crowd_map.get(str(crowd_lvl).lower(), 1)
+            plat_gap = 0 if is_match else abs(current_plat - assigned_plat)
+            features = [[minutes_rem, plat_gap, base_walk, c_val]]
+
+            pred_risk = ml_model.predict(features)[0]
+            probs = ml_model.predict_proba(features)[0]
+            confidence = int(max(probs) * 100)
+
+            risk_level = pred_risk
+            model_used = f"Random Forest Classifier (Scikit-Learn ML - {confidence}% Confidence)"
+        except Exception as e:
+            print(f"[WARN] ML Model prediction failed: {e}")
+
+    # 3. Guidance Generation
     guidance = generate_guidance_steps(
         is_match=is_match,
         current_plat=current_plat,
@@ -287,7 +357,7 @@ def check_platform():
         'risk_level': risk_level,
         'risk_summary': summary,
         'guidance': guidance,
-        'model_used': 'Transparent Rule-Based Baseline Engine'
+        'model_used': model_used
     })
 
 
@@ -297,14 +367,25 @@ def check_platform():
 
 @app.route('/admin')
 def admin_dashboard():
-    """Admin Management Dashboard"""
+    """Admin Management Dashboard with ML Model Performance Metrics"""
     logged_in = session.get('admin_logged_in', False)
     records = []
+    metrics = None
     if logged_in:
         conn = get_db_connection()
         records = conn.execute('SELECT * FROM trains ORDER BY station, departure_time').fetchall()
         conn.close()
-    return render_template('admin.html', logged_in=logged_in, records=records)
+
+        # Load ML metrics if trained
+        if os.path.exists(METRICS_FILE):
+            try:
+                import json
+                with open(METRICS_FILE, 'r', encoding='utf-8') as f:
+                    metrics = json.load(f)
+            except Exception as e:
+                print(f"[WARN] Could not read metrics: {e}")
+
+    return render_template('admin.html', logged_in=logged_in, records=records, metrics=metrics, ml_active=(ml_model is not None))
 
 
 @app.route('/admin/login', methods=['POST'])
@@ -435,6 +516,7 @@ def admin_import_csv():
 
 if __name__ == '__main__':
     init_db()
+    load_ml_model()
     print("=" * 60)
     print("  RAILGUARD AI SERVER READY")
     print("  Local PC URL:      http://127.0.0.1:5000")

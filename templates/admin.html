@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RailGuard AI - Admin Dashboard</title>
+    <title>RailGuard AI - Authority & Admin Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         .admin-header {
             display: flex;
@@ -40,6 +40,7 @@
             cursor: pointer;
             border: none;
         }
+        .btn-edit { background: var(--accent); color: white; }
         .btn-del { background: #ef4444; color: white; margin-left: 0.25rem; }
         .csv-box {
             background: #f8fafc;
@@ -51,13 +52,13 @@
         }
         .auth-bar {
             background: #e2e8f0;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.875rem;
+            font-size: 0.9rem;
         }
     </style>
 </head>
@@ -65,26 +66,48 @@
     <header class="navbar">
         <div class="nav-container">
             <div class="logo">
-                <span class="logo-icon">🚆</span>
-                <span class="logo-text">RailGuard <strong>AI Admin</strong></span>
+                <svg class="logo-svg" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M24 4L7 11V23C7 33.2 14.3 42.5 24 45C33.7 42.5 41 33.2 41 23V11L24 4Z" fill="url(#shieldGradAdmin)" stroke="#38bdf8" stroke-width="1.5" />
+                    <path d="M17 15C17 13.9 17.9 13 19 13H29C30.1 13 31 13.9 31 15V27C31 29.8 28.8 32 26 32H22C19.2 32 17 29.8 17 27V15Z" fill="#ffffff" />
+                    <path d="M19 16C19 15.4 19.4 15 20 15H28C28.6 15 29 15.4 29 16V20H19V16Z" fill="#1e3a8a" />
+                    <circle cx="20.5" cy="27.5" r="1.5" fill="#38bdf8" />
+                    <circle cx="27.5" cy="27.5" r="1.5" fill="#38bdf8" />
+                    <line x1="24" y1="23" x2="24" y2="28" stroke="#0284c7" stroke-width="1.5" stroke-linecap="round" />
+                    <path d="M15 36L21 34H27L33 36" stroke="#93c5fd" stroke-width="2" stroke-linecap="round" />
+                    <path d="M13 39L35 39" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" />
+                    <defs>
+                        <linearGradient id="shieldGradAdmin" x1="7" y1="4" x2="41" y2="45" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#1e3a8a" />
+                            <stop offset="0.6" stop-color="#0f172a" />
+                            <stop offset="1" stop-color="#0284c7" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <div class="logo-brand">
+                    <span class="logo-title">RailGuard <span class="ai-badge">Admin</span></span>
+                    <span class="logo-sub">Station Authority & Schedule Management</span>
+                </div>
             </div>
             <div class="nav-actions">
-                <a href="/" class="btn-admin-nav">Passenger View</a>
+                <a href="/" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem; width: auto; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);">
+                    👤 Open Passenger Interface
+                </a>
             </div>
         </div>
     </header>
 
     <main class="main-container" style="max-width: 1000px;">
-        <div class="admin-header">
-            <h2>Railway Schedule & Platform Manager</h2>
-        </div>
-
         {% if not logged_in %}
         <!-- Admin Login Card -->
-        <section class="card" style="max-width: 400px; margin: 2rem auto;">
-            <h3>Admin Authentication</h3>
+        <section class="card" style="max-width: 420px; margin: 3rem auto;">
+            <h2 style="font-size: 1.35rem; margin-bottom: 0.5rem; text-align: center;">🔒 Station Authority Login</h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted); text-align: center; margin-bottom: 1.5rem;">
+                Authorized railway staff access only. Platform changes update passenger guidance in real-time.
+            </p>
             {% if auth_error %}
-                <p style="color: red; font-size: 0.85rem; margin-bottom: 0.5rem;">{{ auth_error }}</p>
+                <div style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 0.75rem; border-radius: 6px; font-size: 0.85rem; margin-bottom: 1rem;">
+                    ⚠️ {{ auth_error }}
+                </div>
             {% endif %}
             <form method="POST" action="/admin/login">
                 <div class="form-group">
@@ -95,15 +118,20 @@
                     <label>Password</label>
                     <input type="password" name="password" required placeholder="••••••••">
                 </div>
-                <button type="submit" class="btn-primary">Sign In</button>
+                <button type="submit" class="btn-primary" style="margin-top: 0.5rem;">Authenticate & Enter</button>
             </form>
-            <p style="margin-top: 1rem; font-size: 0.75rem; color: #64748b; text-align: center;">Default prototype login: <code>admin</code> / <code>admin123</code></p>
+            <p style="margin-top: 1.25rem; font-size: 0.75rem; color: #64748b; text-align: center;">
+                Default prototype credentials: <code>admin</code> / <code>admin123</code>
+            </p>
         </section>
         {% else %}
 
         <div class="auth-bar">
-            <span>Signed in as <strong>{{ session.get('admin_user', 'Admin') }}</strong></span>
-            <a href="/admin/logout" style="color: #ef4444; text-decoration: none; font-weight: 600;">Sign Out</a>
+            <span>Logged in as <strong>{{ session.get('admin_user', 'Admin') }}</strong> (Railway Station Authority)</span>
+            <div>
+                <a href="/" class="btn-sm btn-edit" style="text-decoration: none; padding: 0.45rem 0.8rem; margin-right: 0.5rem;">Passenger View</a>
+                <a href="/admin/logout" style="color: #ef4444; text-decoration: none; font-weight: 600; margin-left: 0.5rem;">Sign Out</a>
+            </div>
         </div>
 
         <!-- CSV Import Card -->
@@ -123,6 +151,9 @@
         <!-- Add or Update Train Record -->
         <section class="card">
             <h3>Add / Update Train Platform Assignment</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                Use this form when a platform assignment changes. The passenger interface immediately reflects updated walking directions and risk assessments.
+            </p>
             <form action="/admin/save-train" method="POST">
                 <div class="form-row">
                     <div class="form-group col">
